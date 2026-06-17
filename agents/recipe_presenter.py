@@ -73,24 +73,7 @@ def present_recipe(masterclass: dict, preferences: dict = None) -> dict:
         except Exception:
             pass
 
-    # 3. Estimate cost
-    servings = masterclass.get("servings", 1)
-    base_cost = 100
-    protein_cost = 0
-    rice_cost = 0
-    
-    ingredients_lower = " ".join(ingredients).lower()
-    if "chicken" in ingredients_lower:
-        protein_cost = 150
-    elif "beef" in ingredients_lower or "mutton" in ingredients_lower:
-        protein_cost = 200
-        
-    if "rice" in ingredients_lower:
-        rice_cost = 50
-        
-    total_cost = (base_cost + protein_cost + rice_cost) * servings
-    
-    # 4. Difficulty
+    # 3. Difficulty
     total_time = masterclass.get("total_time", 0)
     if total_time < 25:
         difficulty = "Easy"
@@ -99,6 +82,8 @@ def present_recipe(masterclass: dict, preferences: dict = None) -> dict:
     else:
         difficulty = "Hard"
         
+    servings = masterclass.get("servings", 1)
+    
     return {
         "output_language": output_language,
         "show_urdu": show_urdu,
@@ -107,10 +92,11 @@ def present_recipe(masterclass: dict, preferences: dict = None) -> dict:
         "title_urdu": title_urdu,
         "phases": phases,
         "ingredients": ingredients,
+        "ingredients_detailed": masterclass.get("ingredients_detailed", []),
         "ingredients_urdu": ingredients_urdu,
-        "estimated_cost": f"Rs. {total_cost}",
         "cooking_time": f"{total_time} minutes",
         "servings": servings,
         "difficulty": difficulty,
         "grocery_list": ingredients
     }
+

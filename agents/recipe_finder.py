@@ -44,7 +44,13 @@ def find_recipes(ingredients: list, preferences: dict = None) -> list:
         # Fallback to OpenAI if Spoonacular returns 0 results (or if details failed)
         client = get_openai_client()
         system_prompt = "You are a Pakistani/South Asian recipe expert."
-        user_prompt = f"Suggest 3 simple Pakistani recipes using these ingredients: {ingredients}. Return ONLY a JSON array with fields: title, readyInMinutes, ingredients, steps (array of strings)."
+        user_prompt = (
+            f"Suggest 3 simple Pakistani recipes using these ingredients: {ingredients}. "
+            "Return ONLY a JSON array where each recipe has these fields: "
+            "title, readyInMinutes, steps (array of strings), and "
+            "ingredients (array of objects, each with 'name' (string), 'amount' (number), 'unit' (string like 'g', 'kg', 'cups', 'tbsp', 'tsp', 'pcs', etc.)). "
+            "Do not return any other text."
+        )
         
         response = client.chat.completions.create(
             model="gpt-4o-mini",
@@ -69,6 +75,16 @@ def find_recipes(ingredients: list, preferences: dict = None) -> list:
         if isinstance(ai_recipes, list):
             for r in ai_recipes:
                 r["source"] = "ai_fallback"
+                r["extendedIngredients"] = [
+                    {
+                        "name": ing.get("name", ""),
+                        "amount": ing.get("amount", 1),
+                        "unit": ing.get("unit", ""),
+                        "original": f"{ing.get('amount', '')} {ing.get('unit', '')} {ing.get('name', '')}".strip()
+                    }
+                    for ing in r.get("ingredients", [])
+                    if isinstance(ing, dict)
+                ]
             return ai_recipes
         elif isinstance(ai_recipes, dict):
             # Try to extract from a generic key like 'recipes'
@@ -77,10 +93,20 @@ def find_recipes(ingredients: list, preferences: dict = None) -> list:
                     for r in ai_recipes[key]:
                         if isinstance(r, dict):
                             r["source"] = "ai_fallback"
+                            r["extendedIngredients"] = [
+                                {
+                                    "name": ing.get("name", ""),
+                                    "amount": ing.get("amount", 1),
+                                    "unit": ing.get("unit", ""),
+                                    "original": f"{ing.get('amount', '')} {ing.get('unit', '')} {ing.get('name', '')}".strip()
+                                }
+                                for ing in r.get("ingredients", [])
+                                if isinstance(ing, dict)
+                            ]
                     return ai_recipes[key]
                     
         return []
-        
+
     except Exception as e:
-        print(f"Error finding recipes: {e}")
-        return []
+        raise e
+

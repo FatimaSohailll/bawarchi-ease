@@ -71,5 +71,6 @@ def parse_ingredients(user_input: str, image_bytes: bytes = None) -> dict:
             
         return json.loads(content.strip())
         
-    except Exception:
-        return {"ingredients": [], "error": "Could not parse ingredients"}
+    except Exception as e:
+        raise e
+

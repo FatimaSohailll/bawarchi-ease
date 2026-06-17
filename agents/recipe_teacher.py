@@ -90,9 +90,20 @@ def generate_masterclass(recipe: dict) -> dict:
     
     # Handle both Spoonacular (extendedIngredients) and AI fallback (ingredients)
     extended_ingredients = recipe.get("extendedIngredients", [])
+    from utils.measurement_converter import format_ingredient
     if extended_ingredients:
         masterclass["ingredients"] = [i.get("original", i.get("name", "")) for i in extended_ingredients]
+        masterclass["ingredients_detailed"] = [format_ingredient(i) for i in extended_ingredients]
     else:
-        masterclass["ingredients"] = recipe.get("ingredients", [])
+        raw_ings = recipe.get("ingredients", [])
+        masterclass["ingredients"] = []
+        masterclass["ingredients_detailed"] = []
+        for ing in raw_ings:
+            if isinstance(ing, dict):
+                masterclass["ingredients"].append(f"{ing.get('amount', '')} {ing.get('unit', '')} {ing.get('name', '')}".strip())
+                masterclass["ingredients_detailed"].append(format_ingredient(ing))
+            else:
+                masterclass["ingredients"].append(str(ing))
+                masterclass["ingredients_detailed"].append(format_ingredient({"name": str(ing)}))
         
     return masterclass

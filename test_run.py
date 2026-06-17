@@ -37,5 +37,15 @@ def run_smoke_test():
     print(f"Generated {len(masterclass.get('phases', []))} phases for {masterclass.get('recipe_title')}")
     print(json.dumps(masterclass, indent=2))
     
+    print("\n--- 5. Testing generate_recipe_pdf ---")
+    from agents.recipe_presenter import present_recipe
+    from utils.pdf_generator import generate_recipe_pdf
+    card = present_recipe(masterclass)
+    pdf_bytes = generate_recipe_pdf(card, "desi")
+    with open("test_recipe.pdf", "wb") as f:
+        f.write(pdf_bytes)
+    print("PDF generated successfully and written to test_recipe.pdf")
+
+    
 if __name__ == "__main__":
     run_smoke_test()

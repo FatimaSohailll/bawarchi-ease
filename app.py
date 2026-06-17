@@ -11,8 +11,10 @@ from agents.recipe_personalizer import personalize_recipes
 from agents.recipe_teacher import generate_masterclass
 from agents.recipe_presenter import present_recipe
 from agents.panic_mode import get_panic_fix, get_common_problems
+from utils.pdf_generator import generate_recipe_pdf
 
-st.set_page_config(page_title="Bawarchi Ease 🍳", layout="wide")
+
+st.set_page_config(page_title="Bawarchi Ease", layout="wide")
 
 init_session_state()
 
@@ -23,7 +25,7 @@ step = st.session_state["step"]
 
 # --- STEP 1: input ---
 if step == "input":
-    st.header("Bawarchi Ease – Your AI Kitchen Mentor 🍳")
+    st.header("Bawarchi Ease – Your AI Kitchen Mentor")
     st.subheader("آپ کے باورچی خانے کا ذہین ساتھی")
 
     col1, col2 = st.columns([6, 4])
@@ -187,18 +189,41 @@ elif step == "cook":
                             
     with st.sidebar:
         st.subheader("Recipe Info")
-        st.write(f"**Estimated Cost:** {card.get('estimated_cost', '')}")
         st.write(f"**Cooking Time:** {card.get('cooking_time', '')}")
         st.write(f"**Difficulty:** {card.get('difficulty', '')}")
+
         
         st.subheader("Grocery List")
-        grocery_list = card.get("grocery_list", [])
-        for item in grocery_list:
-            st.write(f"- {item}")
+        unit_system_label = st.radio("Measurement System:", ["Metric", "US Standard", "Desi (Tola/Pau/Ser)"], index=0)
+        unit_system = {"Metric": "metric", "US Standard": "us", "Desi (Tola/Pau/Ser)": "desi"}[unit_system_label]
+        
+        ingredients_detailed = card.get("ingredients_detailed", [])
+        if ingredients_detailed:
+            for ing in ingredients_detailed:
+                name = ing.get("name", "")
+                if unit_system == "us":
+                    measure = ing.get("us", "")
+                elif unit_system == "desi":
+                    measure = ing.get("desi", "")
+                else:
+                    measure = ing.get("metric", "")
+                st.write(f"- **{name}**: {measure}")
+        else:
+            grocery_list = card.get("grocery_list", [])
+            for item in grocery_list:
+                st.write(f"- {item}")
             
-        if grocery_list:
-            csv_content = "Item\n" + "\n".join(f'"{item}"' for item in grocery_list)
-            st.download_button("Download CSV", data=csv_content, file_name="grocery_list.csv", mime="text/csv")
+        if card:
+            pdf_bytes = generate_recipe_pdf(card, unit_system)
+            recipe_title_slug = card.get("recipe_title", "recipe").lower().replace(" ", "_")
+            st.download_button(
+                label="📄 Download Recipe PDF",
+                data=pdf_bytes,
+                file_name=f"{recipe_title_slug}_recipe.pdf",
+                mime="application/pdf",
+                use_container_width=True
+            )
+
             
         if st.button("Quit Cooking"):
             reset_cooking_session()

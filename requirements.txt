@@ -3,3 +3,7 @@ requests
 streamlit
 python-dotenv
 Pillow
+reportlab
+arabic-reshaper
+python-bidi
+
